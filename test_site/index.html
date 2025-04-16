@@ -1,0 +1,175 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Test Tracker Loading</title>-->
+
+<!--    &lt;!&ndash; Snowplow Initialization Snippet - ADD THIS! &ndash;&gt;-->
+<!--    <script type="text/javascript">-->
+<!--        ;(function(p,l,o,w,i,n,g){if(!p[i]){p.GlobalSnowplowNamespace=p.GlobalSnowplowNamespace||[];-->
+<!--        p.GlobalSnowplowNamespace.push(i);p[i]=function(){(p[i].q=p[i].q||[]).push(arguments)-->
+<!--        };p[i].q=p[i].q||[];n=l.createElement(o);g=l.getElementsByTagName(o)[0];n.async=1;-->
+<!--        n.src=w;g.parentNode.insertBefore(n,g)}}(window,document,"script","http://localhost:8080/tracker_files/tracker.js","snowplow"));-->
+<!--    </script>-->
+<!--    &lt;!&ndash; End Snowplow Snippet &ndash;&gt;-->
+
+<!--</head>-->
+<!--<body>-->
+<!--<h1>Testing My Local CDN Tracker</h1>-->
+<!--<p>Check the browser's developer console (F12) to see if the tracker loaded.</p>-->
+
+<!--&lt;!&ndash;-->
+<!--    Load the tracker script from the LOCAL web server (acting as our CDN).-->
+<!--    IMPORTANT: The snippet above now handles loading the script,-->
+<!--               so you can technically remove the tag below, OR-->
+<!--               keep it but ensure the src matches EXACTLY the one in the snippet.-->
+<!--               For simplicity with the standard snippet, REMOVE the line below.-->
+<!--&ndash;&gt;-->
+<!--&lt;!&ndash; <script src="http://localhost:8080/tracker_files/tracker.js" async defer></script> &ndash;&gt; &lt;!&ndash; REMOVE OR COMMENT OUT THIS LINE &ndash;&gt;-->
+
+
+<!--&lt;!&ndash; Optional: Try calling a function - This will still fail as 'trackEvent' doesn't exist &ndash;&gt;-->
+<!--&lt;!&ndash; Instead, you would use the snowplow function like: window.snowplow('trackPageView'); &ndash;&gt;-->
+<!--<script>-->
+<!--    console.log("Attempting to initialize Snowplow tracker...");-->
+
+<!--    window.snowplow('newTracker',-->
+<!--        'sp', // Tracker namespace-->
+<!--        // *** CHANGE THIS LINE ***-->
+<!--        'localhost:9090', // Collector URL pointing to Snowplow Micro-->
+<!--        {-->
+<!--            appId: 'my-local-test-app',-->
+<!--            platform: 'web',-->
+<!--            // Optional: Force HTTP for local Micro testing if needed-->
+<!--            // protocol: 'http',-->
+<!--            // Optional: Set buffer size to 1 to send events immediately for testing-->
+<!--            bufferSize: 1-->
+<!--         }-->
+<!--    );-->
+
+<!--    console.log("SUCCESS: Snowplow 'newTracker' command was executed by tracker.js.");-->
+
+<!--    // Now let's send a test event (e.g., PageView)-->
+<!--    console.log("Sending trackPageView event to Snowplow Micro...");-->
+<!--    window.snowplow('trackPageView');-->
+
+<!--    console.log("Called trackPageView - check Network tab AND Snowplow Micro UI/API.");-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snowplow Event Tracking Test</title>
+
+    <!-- Snowplow Initialization Snippet -->
+    <script type="text/javascript">
+        ;(function(p,l,o,w,i,n,g){if(!p[i]){p.GlobalSnowplowNamespace=p.GlobalSnowplowNamespace||[];
+        p.GlobalSnowplowNamespace.push(i);p[i]=function(){(p[i].q=p[i].q||[]).push(arguments)
+        };p[i].q=p[i].q||[];n=l.createElement(o);g=l.getElementsByTagName(o)[0];n.async=1;
+        // Ensure this URL points to your locally served tracker file
+        n.src="http://localhost:8080/tracker_files/tracker.js";
+        g.parentNode.insertBefore(n,g)}}(window,document,"script","","snowplow"));
+    </script>
+    <!-- End Snowplow Snippet -->
+
+    <style>
+        body { font-family: sans-serif; }
+        button, a { margin: 10px 5px; padding: 8px 15px; cursor: pointer; }
+        .event-section { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; }
+    </style>
+
+</head>
+<body>
+<h1>Snowplow Event Tracking Test</h1>
+<p>Perform actions below and check Snowplow Micro UI: <a href="http://localhost:9090/micro/ui" target="_blank">http://localhost:9090/micro/ui</a></p>
+<p>Also check the Browser's Network tab (F12) for requests to `/i` endpoint.</p>
+
+<div class="event-section">
+    <h2>1. Page View Event</h2>
+    <p>This should be tracked automatically when the page loads.</p>
+    <!-- No button needed here -->
+</div>
+
+<div class="event-section">
+    <h2>2. Self-Describing Event (Button Click)</h2>
+    <p>Clicking this button sends a custom event.</p>
+    <button id="customEventButton">Track Custom Button Click</button>
+</div>
+
+<div class="event-section">
+    <h2>3. Link Click Event (Automatic)</h2>
+    <p>Clicking this link should be tracked automatically if enabled.</p>
+    <a href="https://snowplow.io" target="_blank" id="trackedLink">Visit Snowplow (Tracked Link)</a>
+    <a href="https://example.com" target="_blank" id="untrackedLink">Visit Example.com (Untracked Link)</a>
+</div>
+
+<!-- JavaScript for Tracker Configuration and Event Handling -->
+<script>
+    console.log("Configuring Snowplow tracker...");
+
+    // 1. Initialize the tracker
+    window.snowplow('newTracker',
+        'sp', // Tracker namespace
+        'localhost:9090', // Collector URL pointing to Snowplow Micro
+        {
+            appId: 'my-local-test-app',
+            platform: 'web',
+            bufferSize: 1, // Send events immediately for testing
+            // Contexts you might want automatically added:
+            contexts: {
+                webPage: true, // Adds page context (URL, referrer)
+                performanceTiming: true // Adds browser performance timing
+            }
+         }
+    );
+
+    // 2. Track the initial Page View
+    console.log("Tracking Page View...");
+    window.snowplow('trackPageView');
+
+    // 3. Enable Link Click Tracking (Optional: customize filtering)
+    // This will automatically track clicks on <a> tags.
+    // You can add filters ({filter: function...}, whitelist/blacklist classes) if needed.
+    console.log("Enabling Automatic Link Click Tracking...");
+    window.snowplow('enableLinkClickTracking');
+    // By default, it tracks all links. No specific listener needed for TRACKING.
+
+    // 4. Add Event Listener for the Custom Button
+    const customButton = document.getElementById('customEventButton');
+    if (customButton) {
+        customButton.addEventListener('click', function() {
+            console.log("Custom button clicked! Sending self-describing event...");
+
+            // Define the self-describing event payload
+            const eventData = {
+                // IMPORTANT: Replace with a REAL schema you have defined in your Iglu registry
+                // For testing, you can use a placeholder, but Micro might mark it as 'Bad' if the schema isn't found.
+                // Let's use a common Snowplow one for demo, though ideally it's your custom one.
+                schema: 'iglu:com.snowplowanalytics.snowplow/button_click/jsonschema/1-0-0', // Example schema
+                data: {
+                    // Data specific to your event
+                    buttonId: 'customEventButton',
+                    buttonText: customButton.innerText,
+                    targetUrl: null // No URL for this button
+                }
+            };
+
+            // Send the event
+            window.snowplow('trackSelfDescribingEvent', eventData);
+
+            alert('Custom event sent! Check Snowplow Micro UI.');
+        });
+    } else {
+        console.error("Could not find element with ID: customEventButton");
+    }
+
+    console.log("Snowplow setup complete. Ready to track actions.");
+
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2 # Use a specific version
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2 # Use a matching version
+    container_name: kafka
+    ports:
+      # Port for connections from your host machine (Spark, tools)
+      - "9092:9092"
+      # Port for connections within the Docker network (Micro -> Kafka)
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Listeners: Internal for Docker network, External for host access
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Optional: Auto-create topics (useful for testing, disable in production)
+      # KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  snowplow-micro-kafka:
+    image: snowplow/snowplow-micro:latest # Or pin a specific version
+    container_name: snowplow-micro-kafka
+    ports:
+      - "9090:9090" # Micro's collector port
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      # Mount a custom config file to tell Micro to use Kafka sink
+      - ./micro-kafka.conf:/snowplow/config/micro.conf:ro
+#    command: [ "/snowplow/bin/snowplow-micro", "--collector-config", "/snowplow/config/micro.conf" ]
+
+
+    # Optional: Explicitly point to the config if needed, though Micro usually finds it
+    # command: ["/snowplow/bin/snowplow-micro", "--config", "/snowplow/config/micro.conf"]
+
+# Optional: Define a network if needed, though default usually works
+# networks:
+#   default:
+#     driver: bridge
